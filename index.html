@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body, html { margin:0; padding:0; height:100%; }
+#map { height:100%; width:100%; }
+.leaflet-control-zoom { display: none !important; }
+#title { position:absolute; top:10px; width:100%; text-align:center; z-index:1000; font-size:20px; font-weight:bold; color:white; text-shadow:2px 2px 4px black; pointer-events:none; }
+#status { position:absolute; bottom:20px; left:10px; z-index:1000; background:rgba(255,255,255,0.9); padding:8px; border-radius:5px; font-size:12px; border:1px solid #333; }
+.zone-label { color:yellow; font-weight:bold; font-size:16px; text-shadow:1px 1px 2px black; }
+#btn { position:absolute; bottom:30px; right:20px; z-index:1000; width:65px; height:65px; background:#FF5722; border-radius:50%; color:white; font-size:30px; border:none; box-shadow:0 0 15px rgba(0,0,0,0.6); cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="title">아산출고 치장장 MAP</div>
+<div id="status">GPS 연결 중...</div>
+<button id="btn" onclick="map.setView(currentPos, 19)">📍</button>
+<div id="map"></div>
+<script>
+var map = L.map('map').setView([36.8522, 126.8610], 18);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+
+var marker = L.circleMarker([0,0], {radius:8, fillColor:'#00FF00', fillOpacity:1, color:'#fff', weight:2}).addTo(map);
+var statusDiv = document.getElementById('status');
+var currentPos = null;
+
+var zones = [
+{name:"PA", coords:[[36.8525,126.8592],[36.8525,126.8602],[36.8519,126.8602],[36.8517,126.8600],[36.8517,126.8592]], label:[36.8522,126.8598]},
+{name:"P", coords:[[36.8525,126.8603],[36.8525,126.8613],[36.8519,126.8613],[36.8519,126.8603]], label:[36.8522,126.8608]},
+{name:"Y", coords:[[36.8505,126.8575],[36.8508,126.8579],[36.8508,126.8587],[36.8489,126.8587],[36.8498,126.8576]], label:[36.8502,126.8580]},
+{name:"C", coords:[[36.8508,126.8587],[36.8508,126.8598],[36.8487,126.8598],[36.8487,126.8587]], label:[36.8502,126.8592]},
+{name:"B", coords:[[36.8508,126.8599],[36.8508,126.8611],[36.8486,126.8611],[36.8486,126.8599]], label:[36.8502,126.8610]},
+{name:"A", coords:[[36.8508,126.8611],[36.8508,126.8624],[36.8486,126.8624],[36.8486,126.8611]], label:[36.8502,126.8624]},
+{name:"수출", coords:[[36.8486,126.8585],[36.8486,126.8635],[36.8463,126.8635],[36.8463,126.8597]], label:[36.8477,126.8612]},
+{name:"배송동", coords:[[36.8508,126.8624],[36.8508,126.8635],[36.8486,126.8635],[36.8486,126.8624]], label:[36.8502,126.8627]},
+{name:"R", coords:[[36.8500,126.8638],[36.8500,126.8659],[36.8486,126.8659],[36.8486,126.8644],[36.8488,126.8638]], label:[36.8493,126.8649]},
+{name:"RA", coords:[[36.8500,126.8638],[36.8506,126.8638],[36.8507,126.8640],[36.8507,126.8659],[36.8500,126.8659]], label:[36.8504,126.8648]},
+{name:"KA", coords:[[36.8484,126.8638],[36.8484,126.8642],[36.8486,126.8644],[36.8486,126.8659],[36.8478,126.8659],[36.8478,126.8638]], label:[36.8482,126.8648]},
+{name:"K", coords:[[36.8478,126.8638],[36.8478,126.8659],[36.8463,126.8659],[36.8463,126.8642],[36.8467,126.8638]], label:[36.8471,126.8649]},
+{name:"JA", coords:[[36.8486,126.8660],[36.8500,126.8660],[36.8500,126.8678],[36.8486,126.8678]], label:[36.8504,126.8668]},
+{name:"J", coords:[[36.8500,126.8660],[36.8508,126.8660],[36.8508,126.8678],[36.8500,126.8678]], label:[36.8493,126.8669]},
+{name:"IA", coords:[[36.8478,126.8660],[36.8485,126.8660],[36.8485,126.8678],[36.8478,126.8678]], label:[36.8482,126.8668]},
+{name:"I", coords:[[36.8478,126.8660],[36.8478,126.8679],[36.8463,126.8679],[36.8463,126.8660]], label:[36.8471,126.8669]},
+{name:"H", coords:[[36.8478,126.8681],[36.8478,126.8693],[36.8463,126.8693],[36.8463,126.8681]], label:[36.8472,126.8687]},
+{name:"HA", coords:[[36.8478,126.8681],[36.8485,126.8681],[36.8485,126.8693],[36.8478,126.8693]], label:[36.8482,126.8688]},
+{name:"HB", coords:[[36.8486,126.8680],[36.8500,126.8680],[36.8500,126.8693],[36.8486,126.8693]], label:[36.8493,126.8688]},
+{name:"N", coords:[[36.8459,126.8651],[36.8459,126.8672],[36.8445,126.8672],[36.8445,126.8668]], label:[36.8453,126.8666]},
+{name:"M", coords:[[36.8459,126.8672],[36.8459,126.8687],[36.8445,126.8687],[36.8445,126.8672]], label:[36.8453,126.8681]},
+{name:"L", coords:[[36.8459,126.8687],[36.8459,126.8702],[36.8442,126.8702],[36.8442,126.8692],[36.8445,126.8692],[36.8445,126.8687]], label:[36.8453,126.8695]}
+];
+
+// 2. 구역 그리기 (오류 방지용 try-catch 추가)
+zones.forEach(z => {
+try {
+L.polygon(z.coords, {color:'yellow', weight:2}).addTo(map);
+L.marker(z.label, {icon:L.divIcon({className:'zone-label', html:z.name})}).addTo(map);
+} catch(err) {
+console.error("구역 렌더링 에러:", z.name, err);
+}
+});
+
+// 3. 실시간 위치 추적
+navigator.geolocation.watchPosition(
+p => {
+currentPos = [p.coords.latitude, p.coords.longitude];
+marker.setLatLng(currentPos);
+statusDiv.innerHTML = "GPS 실시간 수신 중";
+},
+e => { statusDiv.innerHTML = "GPS 신호 없음"; },
+{ enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+);
+</script>
+</body>
+</html>
